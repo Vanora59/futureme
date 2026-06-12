@@ -303,7 +303,16 @@ with tab1:
             }
 
             feedback_df = pd.DataFrame([feedback_data])
-            file_name = "futureme_feedback.csv"
+
+            desktop_path = os.path.join(
+                os.path.expanduser("~"),
+                "Desktop"
+            )
+
+            file_name = os.path.join(
+                desktop_path,
+                "futureme_feedback.csv"
+            )
 
             if os.path.exists(file_name):
                 existing_df = pd.read_csv(file_name)
