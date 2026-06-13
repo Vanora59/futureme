@@ -5,11 +5,11 @@ import os
 
 st.set_page_config(page_title="FutureMe", page_icon="💡", layout="centered")
 
-# session state
+if "show_plan" not in st.session_state:
+    st.session_state.show_plan = False
 
-# helper functions
-
-# app UI
+if "feedback_saved" not in st.session_state:
+    st.session_state.feedback_saved = False
 st.title("FutureMe")
 
 
