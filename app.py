@@ -10,7 +10,6 @@ if "show_plan" not in st.session_state:
 
 if "feedback_saved" not in st.session_state:
     st.session_state.feedback_saved = False
-st.title("FutureMe")
 
 
 def detect_task_type(task):
