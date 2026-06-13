@@ -1,99 +1,175 @@
-import streamlit as st
-import pandas as pd
-from datetime import datetime
-import os
-
-st.set_page_config(page_title="FutureMe", page_icon="💡", layout="centered")
-
-if "show_plan" not in st.session_state:
-    st.session_state.show_plan = False
-
-if "feedback_saved" not in st.session_state:
-    st.session_state.feedback_saved = False
-
-
 def detect_task_type(task):
     task_lower = task.lower()
 
-    if "clean" in task_lower or "room" in task_lower or "laundry" in task_lower or "trash" in task_lower:
+    if any(word in task_lower for word in ["clean", "room", "kitchen", "laundry", "trash", "dishes", "litter"]):
         return "cleaning"
 
-    elif "math" in task_lower or "exam" in task_lower or "test" in task_lower or "homework" in task_lower or "study" in task_lower:
+    elif any(word in task_lower for word in ["dog", "cat", "pet", "animal", "feed", "walk"]):
+        return "pet_care"
+
+    elif any(word in task_lower for word in ["math", "exam", "test", "homework", "study", "quiz"]):
         return "school"
 
-    elif "essay" in task_lower or "write" in task_lower or "paper" in task_lower or "draft" in task_lower:
+    elif any(word in task_lower for word in ["essay", "write", "paper", "draft"]):
         return "writing"
+
+    elif any(word in task_lower for word in ["workout", "exercise", "gym", "run"]):
+        return "exercise"
+
+    elif any(word in task_lower for word in ["shower", "brush teeth", "hygiene"]):
+        return "hygiene"
+
+    elif any(word in task_lower for word in ["email", "call", "message"]):
+        return "communication"
 
     else:
         return "general"
 
 
-def get_first_step(task, reason):
+def detect_cleaning_subtype(task):
+    task_lower = task.lower()
 
+    if any(word in task_lower for word in ["kitchen", "dishes", "sink", "counter", "stove"]):
+        return "kitchen"
+
+    elif any(word in task_lower for word in ["room", "bedroom", "desk", "bed"]):
+        return "room"
+
+    elif any(word in task_lower for word in ["laundry", "clothes"]):
+        return "laundry"
+
+    elif any(word in task_lower for word in ["trash", "garbage"]):
+        return "trash"
+
+    elif any(word in task_lower for word in ["litter", "kitty litter"]):
+        return "cat_litter"
+
+    else:
+        return "general_cleaning"
+
+
+def detect_pet_subtype(task):
+    task_lower = task.lower()
+
+    if "dog" in task_lower or "walk" in task_lower:
+        return "dog"
+
+    elif "cat" in task_lower or "kitty" in task_lower or "litter" in task_lower:
+        return "cat"
+
+    elif "feed" in task_lower or "food" in task_lower or "animal" in task_lower or "pet" in task_lower:
+        return "feeding"
+
+    else:
+        return "general_pet"
+
+
+def get_first_step(task, reason):
     task_type = detect_task_type(task)
 
     if task_type == "cleaning":
+        cleaning_subtype = detect_cleaning_subtype(task)
 
-        if reason == "too tired":
-            return "Pick up 5 items from the floor or desk. Do not try to clean the whole room yet."
+        if cleaning_subtype == "kitchen":
+            if reason == "too tired":
+                return "Clear only the sink area or put away 5 dishes. Do not try to clean the whole kitchen yet."
+            elif reason == "too big":
+                return "Choose one kitchen zone: sink, counter, stove, or table. Clean only that zone first."
+            elif reason == "boring":
+                return "Set a 5-minute timer and clean only one kitchen surface."
+            else:
+                return "Start by putting away 5 dishes or wiping one counter."
 
-        elif reason == "too big":
-            return "Choose one tiny area, like your desk, bed, or one corner of the room."
+        elif cleaning_subtype == "room":
+            if reason == "too tired":
+                return "Pick up 5 items from the floor or desk. Do not try to clean the whole room yet."
+            elif reason == "too big":
+                return "Choose one tiny area, like your desk, bed, or one corner of the room."
+            elif reason == "boring":
+                return "Set a 5-minute timer and clean only until the timer ends."
+            else:
+                return "Start by putting away one category: clothes, trash, books, or dishes."
 
-        elif reason == "boring":
-            return "Set a 5-minute timer and clean only until the timer ends."
+        elif cleaning_subtype == "laundry":
+            return "Put all visible clothes into one pile or basket. Do not sort everything yet."
 
-        elif reason == "don't know where to start":
-            return "Start by putting away one category: clothes, trash, books, or dishes."
+        elif cleaning_subtype == "trash":
+            return "Find and throw away 5 pieces of trash first."
+
+        elif cleaning_subtype == "cat_litter":
+            return "Scoop only one small section of the litter box first. You do not need to deep-clean everything."
 
         else:
-            return "Pick one visible item and put it where it belongs."
+            return "Pick one small cleaning zone and work on it for 5 minutes."
+
+    elif task_type == "pet_care":
+        pet_subtype = detect_pet_subtype(task)
+
+        if pet_subtype == "dog":
+            if reason == "too tired":
+                return "Put on your shoes and get the leash first. You only need to start the walk."
+            elif reason == "too big":
+                return "Commit to walking the dog for just 5 minutes first."
+            else:
+                return "Get the leash and open the door. Starting is the hardest part."
+
+        elif pet_subtype == "cat":
+            if "litter" in task.lower():
+                return "Scoop one small section of the litter box first."
+            else:
+                return "Check the cat’s food or water first. Start with only one pet-care action."
+
+        elif pet_subtype == "feeding":
+            return "Prepare the food first. You do not need to finish every pet task at once."
+
+        else:
+            return "Do one small pet-care action first, like checking food, water, or supplies."
 
     elif task_type == "school":
-
         if reason == "too tired":
             return "Open your notes and choose one small section, formula, or problem type."
-
         elif reason == "too difficult":
             return "Start with the easiest problem first."
-
         elif reason == "too big":
             return "Break the assignment into 3 small parts and start with the easiest one."
-
         else:
             return "Open the assignment and choose one small part to begin."
 
     elif task_type == "writing":
-
         if reason == "fear of doing badly":
             return "Write a messy first sentence without worrying if it is good."
-
         elif reason == "don't know where to start":
             return "Write 3 bullet points about what the essay could include."
-
         elif reason == "too big":
             return "Write only the title and one possible opening idea."
-
         else:
             return "Open the document and write only the title or first sentence."
 
-    else:
+    elif task_type == "exercise":
+        return "Put on workout clothes or shoes first. You do not need to complete a full workout yet."
 
+    elif task_type == "hygiene":
+        return "Go to the bathroom and prepare what you need first."
+
+    elif task_type == "communication":
+        if "email" in task.lower():
+            return "Open the email draft and write only the first sentence."
+        elif "call" in task.lower():
+            return "Write down what you need to say before making the call."
+        else:
+            return "Open the message and write one simple sentence first."
+
+    else:
         if reason == "too tired":
             return "Prepare one thing you need and do the smallest possible action."
-
         elif reason == "too difficult":
             return "Find the easiest part and try only that first."
-
         elif reason == "too big":
             return "Break the task into 3 smaller parts and choose the easiest one."
-
         elif reason == "boring":
             return "Set a 5-minute timer and start only until the timer ends."
-
         elif reason == "fear of doing badly":
             return "Make a rough first attempt without judging the quality."
-
         else:
             return "Choose the smallest possible first action and do it for 5 minutes."
 
