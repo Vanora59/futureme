@@ -3,6 +3,15 @@ import pandas as pd
 from datetime import datetime
 import os
 
+st.set_page_config(page_title="FutureMe", page_icon="💡", layout="centered")
+
+# session state
+
+# helper functions
+
+# app UI
+st.title("FutureMe")
+
 
 def detect_task_type(task):
     task_lower = task.lower()
