@@ -15,35 +15,58 @@ if "feedback_saved" not in st.session_state:
 def detect_task_type(task):
     task_lower = task.lower()
 
-    if any(word in task_lower for word in ["clean", "room", "kitchen", "laundry", "trash", "dishes", "litter"]):
-        return "cleaning"
+    if any(word in task_lower for word in [
+        "clean", "room", "kitchen", "laundry", "trash", "garbage",
+        "dishes", "dishwasher", "sink", "counter", "stove", "litter",
+        "vacuum", "sweep", "mop", "organize", "tidy"
+    ]):
+        return "chore"
 
-    elif any(word in task_lower for word in ["dog", "cat", "pet", "animal", "feed", "walk"]):
+    elif any(word in task_lower for word in [
+        "dog", "cat", "pet", "animal", "feed", "walk", "leash", "water bowl"
+    ]):
         return "pet_care"
 
-    elif any(word in task_lower for word in ["math", "exam", "test", "homework", "study", "quiz"]):
+    elif any(word in task_lower for word in [
+        "math", "exam", "test", "homework", "study", "quiz", "biology",
+        "chemistry", "history", "english", "notes", "assignment"
+    ]):
         return "school"
 
-    elif any(word in task_lower for word in ["essay", "write", "paper", "draft"]):
+    elif any(word in task_lower for word in [
+        "essay", "write", "paper", "draft", "paragraph", "report"
+    ]):
         return "writing"
 
-    elif any(word in task_lower for word in ["workout", "exercise", "gym", "run"]):
+    elif any(word in task_lower for word in [
+        "workout", "exercise", "gym", "run", "walk", "stretch"
+    ]):
         return "exercise"
 
-    elif any(word in task_lower for word in ["shower", "brush teeth", "hygiene"]):
+    elif any(word in task_lower for word in [
+        "shower", "brush teeth", "hygiene", "wash face", "get ready"
+    ]):
         return "hygiene"
 
-    elif any(word in task_lower for word in ["email", "call", "message"]):
+    elif any(word in task_lower for word in [
+        "email", "call", "message", "text", "reply"
+    ]):
         return "communication"
 
     else:
         return "general"
 
 
-def detect_cleaning_subtype(task):
+def detect_chore_subtype(task):
     task_lower = task.lower()
 
-    if any(word in task_lower for word in ["kitchen", "dishes", "sink", "counter", "stove"]):
+    if "dishwasher" in task_lower or "unload" in task_lower:
+        return "dishwasher"
+
+    elif "dishes" in task_lower or "sink" in task_lower:
+        return "dishes"
+
+    elif any(word in task_lower for word in ["kitchen", "counter", "stove", "table"]):
         return "kitchen"
 
     elif any(word in task_lower for word in ["room", "bedroom", "desk", "bed"]):
@@ -58,21 +81,30 @@ def detect_cleaning_subtype(task):
     elif any(word in task_lower for word in ["litter", "kitty litter"]):
         return "cat_litter"
 
+    elif any(word in task_lower for word in ["vacuum", "sweep", "mop"]):
+        return "floor"
+
     else:
-        return "general_cleaning"
+        return "general_chore"
 
 
 def detect_pet_subtype(task):
     task_lower = task.lower()
 
-    if "dog" in task_lower or "walk" in task_lower:
+    if "walk" in task_lower or "dog" in task_lower or "leash" in task_lower:
         return "dog"
 
-    elif "cat" in task_lower or "kitty" in task_lower or "litter" in task_lower:
+    elif "litter" in task_lower or "kitty" in task_lower:
+        return "cat_litter"
+
+    elif "cat" in task_lower:
         return "cat"
 
-    elif "feed" in task_lower or "food" in task_lower or "animal" in task_lower or "pet" in task_lower:
+    elif "feed" in task_lower or "food" in task_lower:
         return "feeding"
+
+    elif "water" in task_lower:
+        return "water"
 
     else:
         return "general_pet"
@@ -81,60 +113,60 @@ def detect_pet_subtype(task):
 def get_first_step(task, reason):
     task_type = detect_task_type(task)
 
-    if task_type == "cleaning":
-        cleaning_subtype = detect_cleaning_subtype(task)
+    if task_type == "chore":
+        subtype = detect_chore_subtype(task)
 
-        if cleaning_subtype == "kitchen":
+        if subtype == "dishwasher":
             if reason == "too tired":
-                return "Clear only the sink area or put away 5 dishes. Do not try to clean the whole kitchen yet."
+                return "Unload only the top rack first. You do not need to finish the whole dishwasher."
             elif reason == "too big":
-                return "Choose one kitchen zone: sink, counter, stove, or table. Clean only that zone first."
+                return "Start with one group: cups, plates, or silverware."
             elif reason == "boring":
-                return "Set a 5-minute timer and clean only one kitchen surface."
+                return "Put away 5 dishes first. You can stop after that if needed."
             else:
-                return "Start by putting away 5 dishes or wiping one counter."
+                return "Open the dishwasher and put away the easiest 5 items."
 
-        elif cleaning_subtype == "room":
-            if reason == "too tired":
-                return "Pick up 5 items from the floor or desk. Do not try to clean the whole room yet."
-            elif reason == "too big":
-                return "Choose one tiny area, like your desk, bed, or one corner of the room."
-            elif reason == "boring":
-                return "Set a 5-minute timer and clean only until the timer ends."
-            else:
-                return "Start by putting away one category: clothes, trash, books, or dishes."
+        elif subtype == "dishes":
+            return "Wash or put away 5 dishes first. Do not try to finish the whole sink yet."
 
-        elif cleaning_subtype == "laundry":
+        elif subtype == "kitchen":
+            return "Choose one kitchen zone: sink, counter, stove, or table. Clean only that zone first."
+
+        elif subtype == "room":
+            return "Pick up 5 items from the floor or desk. Do not try to clean the whole room yet."
+
+        elif subtype == "laundry":
             return "Put all visible clothes into one pile or basket. Do not sort everything yet."
 
-        elif cleaning_subtype == "trash":
+        elif subtype == "trash":
             return "Find and throw away 5 pieces of trash first."
 
-        elif cleaning_subtype == "cat_litter":
-            return "Scoop only one small section of the litter box first. You do not need to deep-clean everything."
+        elif subtype == "cat_litter":
+            return "Scoop one small section of the litter box first. You do not need to deep-clean everything."
+
+        elif subtype == "floor":
+            return "Clear one small floor area first, then vacuum or sweep only that area."
 
         else:
-            return "Pick one small cleaning zone and work on it for 5 minutes."
+            return "Choose one tiny chore zone and do only one visible action first."
 
     elif task_type == "pet_care":
-        pet_subtype = detect_pet_subtype(task)
+        subtype = detect_pet_subtype(task)
 
-        if pet_subtype == "dog":
-            if reason == "too tired":
-                return "Put on your shoes and get the leash first. You only need to start the walk."
-            elif reason == "too big":
-                return "Commit to walking the dog for just 5 minutes first."
-            else:
-                return "Get the leash and open the door. Starting is the hardest part."
+        if subtype == "dog":
+            return "Put on your shoes and get the leash first. You only need to start the walk."
 
-        elif pet_subtype == "cat":
-            if "litter" in task.lower():
-                return "Scoop one small section of the litter box first."
-            else:
-                return "Check the cat’s food or water first. Start with only one pet-care action."
+        elif subtype == "cat_litter":
+            return "Scoop one small section of the litter box first."
 
-        elif pet_subtype == "feeding":
+        elif subtype == "cat":
+            return "Check the cat’s food or water first. Start with one small pet-care action."
+
+        elif subtype == "feeding":
             return "Prepare the food first. You do not need to finish every pet task at once."
+
+        elif subtype == "water":
+            return "Refill one water bowl first."
 
         else:
             return "Do one small pet-care action first, like checking food, water, or supplies."
@@ -143,7 +175,7 @@ def get_first_step(task, reason):
         if reason == "too tired":
             return "Open your notes and choose one small section, formula, or problem type."
         elif reason == "too difficult":
-            return "Start with the easiest problem first."
+            return "Start with the easiest problem or question first."
         elif reason == "too big":
             return "Break the assignment into 3 small parts and start with the easiest one."
         else:
@@ -181,7 +213,7 @@ def get_first_step(task, reason):
         elif reason == "too big":
             return "Break the task into 3 smaller parts and choose the easiest one."
         elif reason == "boring":
-            return "Set a 5-minute timer and start only until the timer ends."
+            return "Choose one tiny action instead of using a timer."
         elif reason == "fear of doing badly":
             return "Make a rough first attempt without judging the quality."
         else:
