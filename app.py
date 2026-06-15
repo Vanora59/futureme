@@ -574,166 +574,131 @@ with tab2:
 
         if len(data) > 0:
 
-            total_sessions = len(data)
+            st.subheader("Admin Data Tools")
+
+            st.warning(
+                "Use this section carefully. Changes here directly edit the saved feedback data."
+            )
+
+            edited_data = st.data_editor(
+                data,
+                num_rows="dynamic",
+                use_container_width=True
+            )
+
+            col_save, col_clear = st.columns(2)
+
+            with col_save:
+                if st.button("Save Edited Table"):
+                    edited_data.to_csv(file_name, index=False)
+                    st.success("Edited table saved.")
+                    st.rerun()
+
+            with col_clear:
+                if st.button("Clear All Data"):
+                    os.remove(file_name)
+                    st.success("All feedback data cleared.")
+                    st.rerun()
+
+            st.divider()
+
+            total_sessions = len(edited_data)
 
             started_count = (
-                data["completed_first_step"] == "Yes"
+                edited_data["completed_first_step"] == "Yes"
             ).sum()
 
             started_percent = (
                 started_count / total_sessions
             ) * 100
 
-            avg_minutes = data["minutes_worked"].mean()
-
-            avg_progress = data["progress_percent"].mean()
+            avg_minutes = edited_data["minutes_worked"].mean()
+            avg_progress = edited_data["progress_percent"].mean()
 
             use_again_percent = (
-                (data["use_again"] == "Yes").sum()
+                (edited_data["use_again"] == "Yes").sum()
                 / total_sessions
             ) * 100
 
-            if "recommend" in data.columns:
-
+            if "recommend" in edited_data.columns:
                 recommend_percent = (
-                    (data["recommend"] == "Yes").sum()
+                    (edited_data["recommend"] == "Yes").sum()
                     / total_sessions
                 ) * 100
-
             else:
-
                 recommend_percent = 0
 
-            most_common_reason = data["reason"].mode()[0]
+            most_common_reason = edited_data["reason"].mode()[0]
 
-            if "overwhelm_reduction" in data.columns:
-
+            if "overwhelm_reduction" in edited_data.columns:
                 avg_overwhelm_reduction = (
-                    data["overwhelm_reduction"].mean()
+                    edited_data["overwhelm_reduction"].mean()
                 )
-
             else:
-
                 avg_overwhelm_reduction = 0
 
             st.subheader("Summary Metrics")
 
             col1, col2, col3 = st.columns(3)
-
             col1.metric("Total Sessions", total_sessions)
-
-            col2.metric(
-                "Started Task",
-                f"{started_percent:.1f}%"
-            )
-
-            col3.metric(
-                "Avg Minutes Worked",
-                f"{avg_minutes:.1f}"
-            )
+            col2.metric("Started Task", f"{started_percent:.1f}%")
+            col3.metric("Avg Minutes Worked", f"{avg_minutes:.1f}")
 
             col4, col5, col6 = st.columns(3)
-
-            col4.metric(
-                "Avg Progress",
-                f"{avg_progress:.1f}%"
-            )
-
-            col5.metric(
-                "Would Use Again",
-                f"{use_again_percent:.1f}%"
-            )
-
-            col6.metric(
-                "Top Barrier",
-                most_common_reason
-            )
+            col4.metric("Avg Progress", f"{avg_progress:.1f}%")
+            col5.metric("Would Use Again", f"{use_again_percent:.1f}%")
+            col6.metric("Top Barrier", most_common_reason)
 
             col7, col8 = st.columns(2)
-
             col7.metric(
                 "Avg Overwhelm Reduction",
                 f"{avg_overwhelm_reduction:.1f}"
             )
-
-            col8.metric(
-                "Would Recommend",
-                f"{recommend_percent:.1f}%"
-            )
+            col8.metric("Would Recommend", f"{recommend_percent:.1f}%")
 
             st.divider()
 
-            st.subheader(
-                "Most Common Reasons for Procrastination"
-            )
+            st.subheader("Most Common Reasons for Procrastination")
+            st.bar_chart(edited_data["reason"].value_counts())
 
-            st.bar_chart(data["reason"].value_counts())
-
-            if "task_type" in data.columns:
-
+            if "task_type" in edited_data.columns:
                 st.subheader("Task Types")
-
-                st.bar_chart(
-                    data["task_type"].value_counts()
-                )
+                st.bar_chart(edited_data["task_type"].value_counts())
 
             st.subheader("Progress Across Sessions")
-
-            st.bar_chart(data["progress_percent"])
+            st.bar_chart(edited_data["progress_percent"])
 
             st.subheader("Minutes Worked")
+            st.bar_chart(edited_data["minutes_worked"])
 
-            st.bar_chart(data["minutes_worked"])
-
-            if "overwhelm_reduction" in data.columns:
-
-                st.subheader(
-                    "Overwhelm Reduction Across Sessions"
-                )
-
-                st.bar_chart(
-                    data["overwhelm_reduction"]
-                )
+            if "overwhelm_reduction" in edited_data.columns:
+                st.subheader("Overwhelm Reduction Across Sessions")
+                st.bar_chart(edited_data["overwhelm_reduction"])
 
             st.subheader("User Comments")
 
-            if "comments" in data.columns:
-
-                comments_data = data[
-                    data["comments"].notna()
-                    & (data["comments"] != "")
+            if "comments" in edited_data.columns:
+                comments_data = edited_data[
+                    edited_data["comments"].notna()
+                    & (edited_data["comments"] != "")
                 ]
 
                 if len(comments_data) > 0:
-
                     st.dataframe(
-                        comments_data[
-                            ["timestamp", "task", "comments"]
-                        ]
+                        comments_data[["timestamp", "task", "comments"]]
                     )
-
                 else:
-
                     st.info("No written comments yet.")
-
             else:
-
                 st.info("No comments column found yet.")
 
-            st.subheader("Raw Feedback Data")
-
-            st.dataframe(data)
-
         else:
-
             st.info("No feedback data yet.")
 
     else:
-
         st.info(
             "No feedback data yet. Save a reflection first to generate analytics."
         )
-
 
 with tab3:
 
